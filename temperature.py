@@ -1,17 +1,20 @@
 import adafruit_dht as ad
 import board
 import RPi.GPIO as GPIO
+import time
 
 try:
-    dht_device = ad.DHT22(board.D12, False)
+    # dht_11 = ad.DHT11(board.D23, False)
+    dht_22 = ad.DHT22(board.D4, False)
 except:
-    dht_device.exit()
+    # dht_11.exit()
+    dht_22.exit()
 
-humidity, temperature = dht_device.humidity, dht_device.temperature
-if humidity is not None and temperature is not None:
-    print("Temp={0:0.1f}*C  Humidity={1:0.1f}%".format(temperature, humidity))
+temperature = dht_22.temperature
+if temperature is not None:
+    print("Temp={0:0.1f}*C".format(temperature))
 else:
-    print("Failed to retrieve data from humidity sensor")
-dht_device.exit()
+    print("Failed to retrieve data from DHT11 sensor")
+dht_22.exit()
 
     

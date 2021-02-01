@@ -1,81 +1,72 @@
-import RPi.GPIO as GPIO
+from RPLCD.i2c import CharLCD
 from time import sleep
-from subprocess import *
-from time import sleep, strftime
-from datetime import datetime
 
-cmd = "ip addr show wlan0 | grep inet | awk '{print $2}' | cut -d/ -f1"
+bukva_B[8] = {0b11110, 0b10000, 0b`10000, 0b`11110, 0b10001, 0b10001, 0b11110, 0b00000, }; // Буква
+"Б"
+byte
+bukva_G[8] = {0b11111, 0b10001, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b00000, }; // Буква
+"Г"
+byte
+bukva_D[8] = {0b01111, 0b00101, 0b00101, 0b01001, 0b10001, 0b11111, 0b10001, 0b00000, }; // Буква
+"Д"
+byte
+bukva_ZH[8] = {0b10101, 0b10101, 0b10101, 0b11111, 0b10101, 0b10101, 0b10101, 0b00000, }; // Буква
+"Ж"
+byte
+bukva_Z[8] = {0b01110, 0b10001, 0b00001, 0b00010, 0b00001, 0b10001, 0b01110, 0b00000, }; // Буква
+"З"
+byte
+bukva_I[8] = {0b10001, 0b10011, 0b10011, 0b10101, 0b11001, 0b11001, 0b10001, 0b00000, }; // Буква
+"И"
+byte
+bukva_IY[8] = {0b01110, 0b00000, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b00000, }; // Буква
+"Й"
+byte
+bukva_L[8] = {0b00011, 0b00111, 0b00101, 0b00101, 0b01101, 0b01001, 0b11001, 0b00000, }; // Буква
+"Л"
+byte
+bukva_P[8] = {0b11111, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000, }; // Буква
+"П"
+byte
+bukva_Y[8] = {0b10001, 0b10001, 0b10001, 0b01010, 0b00100, 0b01000, 0b10000, 0b00000, }; // Буква
+"У"
+byte
+bukva_F[8] = {0b00100, 0b11111, 0b10101, 0b10101, 0b11111, 0b00100, 0b00100, 0b00000, }; // Буква
+"Ф"
+byte
+bukva_TS[8] = {0b10010, 0b10010, 0b10010, 0b10010, 0b10010, 0b10010, 0b11111, 0b00001, }; // Буква
+"Ц"
+byte
+bukva_CH[8] = {0b10001, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b00001, 0b00000, }; // Буква
+"Ч"
+byte
+bukva_Sh[8] = {0b10101, 0b10101, 0b10101, 0b10101, 0b10101, 0b10101, 0b11111, 0b00000, }; // Буква
+"Ш"
+byte
+bukva_Shch[8] = {0b10101, 0b10101, 0b10101, 0b10101, 0b10101, 0b10101, 0b11111, 0b00001, }; // Буква
+"Щ"
+byte
+bukva_Mz[8] = {0b10000, 0b10000, 0b10000, 0b11110, 0b10001, 0b10001, 0b11110, 0b00000, }; // Буква
+"Ь"
+byte
+bukva_IYI[8] = {0b10001, 0b10001, 0b10001, 0b11001, 0b10101, 0b10101, 0b11001, 0b00000, }; // Буква
+"Ы"
+byte
+bukva_Yu[8] = {0b10010, 0b10101, 0b10101, 0b11101, 0b10101, 0b10101, 0b10010, 0b00000, }; // Буква
+"Ю"
+byte
+bukva_Ya[8] = {0b01111, 0b10001, 0b10001, 0b01111, 0b00101, 0b01001, 0b10001, 0b00000, }; // Буква
+"Я"
 
-def run_cmd(cmd):
-    p = Popen(cmd, shell=True, stdout=PIPE)
-    output = p.communicate()[0]
-    return output
+lcd = CharLCD(i2c_expander='PCF8574', address=0x27, port=1,
+              cols=20, rows=4, dotsize=8,
+              charmap='A02',
+              auto_linebreaks=True,
+              backlight_enabled=True)
 
-class HD44780:
-    def __init__(self, pin_rs=7, pin_e=8, pins_db=[21, 20, 16, 12]):
-        self.pin_rs=pin_rs
-        self.pin_e=pin_e
-        self.pins_db=pins_db
+lcd.write_string('Привет')
+sleep(2)
 
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin_e, GPIO.OUT)
-        GPIO.setup(self.pin_rs, GPIO.OUT)
-        for pin in self.pins_db:
-            GPIO.setup(pin, GPIO.OUT)
+lcd.backlight_enabled = False
 
-        self.clear()
-
-    def clear(self):
-        """ Blank / Reset LCD """
-        self.cmd(0x33) # $33 8-bit mode
-        self.cmd(0x32) # $32 8-bit mode
-        self.cmd(0x28) # $28 8-bit mode
-        self.cmd(0x0C) # $0C 8-bit mode
-        self.cmd(0x06) # $06 8-bit mode
-        self.cmd(0x01) # $01 8-bit mode
-
-    def cmd(self, bits, char_mode=False):
-        """ Send command to LCD """
-
-        sleep(0.001)
-        bits=bin(bits)[2:].zfill(8)
-
-        GPIO.output(self.pin_rs, char_mode)
-
-        for pin in self.pins_db:
-            GPIO.output(pin, False)
-
-        for i in range(4):
-            if bits[i] == "1":
-                GPIO.output(self.pins_db[::-1][i], True)
-
-        GPIO.output(self.pin_e, True)
-        GPIO.output(self.pin_e, False)
-
-        for pin in self.pins_db:
-            GPIO.output(pin, False)
-
-        for i in range(4,8):
-            if bits[i] == "1":
-                GPIO.output(self.pins_db[::-1][i-4], True)
-
-        GPIO.output(self.pin_e, True)
-        GPIO.output(self.pin_e, False)
-
-    def message(self, text):
-        """ Send string to LCD. Newline wraps to second line """
-        for char in text:
-            if char == 'n':
-                self.cmd(0xC0) # next line
-            else:
-                self.cmd(ord(char),True)
-
-if __name__ == '__main__':
-    GPIO.cleanup()
-    lcd = HD44780()
-    ipaddr = run_cmd(cmd)
-    lcd.message(datetime.now().strftime('%b %d %H:%M:%Sn'))
-    lcd.message('IP %s'% (ipaddr))
-    sleep(10)
-    GPIO.cleanup()
-    """ lcd.message(«Raspberry Pin Take a byte!») """
+lcd.close(clear=True)
